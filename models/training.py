@@ -154,13 +154,6 @@ class ModelBenchmarker:
         pd.DataFrame(res_reg).to_csv(self.features_dir / "benchmarking_regresion.csv", index=False)
         return pd.DataFrame(res_clf), pd.DataFrame(res_reg)
 
-if __name__ == "__main__":
-    BASE = "./data/ESTUDIO_TFM"
-    trainer = ModelBenchmarker(BASE)
-    data = trainer.cargar_datasets_maestros()
-    if data:
-        trainer.ejecutar_benchmarking_completo(data)
-
 # MODELOS:  https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifier.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
