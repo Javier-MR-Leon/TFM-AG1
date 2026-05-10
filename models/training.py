@@ -154,6 +154,46 @@ class ModelBenchmarker:
         pd.DataFrame(res_reg).to_csv(self.features_dir / "benchmarking_regresion.csv", index=False)
         return pd.DataFrame(res_clf), pd.DataFrame(res_reg)
 
+    def guardar_reportes_visuales(self, df_clf, df_reg):
+        """Genera mapas de calor con métricas y sobreajuste."""
+        sns.set_theme(style="white")
+        
+        # CLASIFICACIÓN (Accuracy + Sobreajuste en el texto) 
+        for m in df_clf['Modelo'].unique():
+            df_m = df_clf[df_clf['Modelo'] == m]
+            
+            # Pivotar datos
+            tabla_acc = df_m.pivot(index='Dominio', columns='Modalidad', values='Acc_Val (%)')
+            tabla_gap = df_m.pivot(index='Dominio', columns='Modalidad', values='Gap_Sobreajuste (%)')
+
+            # Crear etiquetas personalizadas: "Acc% (Gap%)"
+            etiquetas = np.array([[f"{acc:.1f}\n({gap:+.1f})" for acc, gap in zip(row_acc, row_gap)] 
+                                 for row_acc, row_gap in zip(tabla_acc.values, tabla_gap.values)])
+
+            plt.figure(figsize=(11, 7))
+            sns.heatmap(tabla_acc, annot=etiquetas, fmt="", cmap="YlGnBu", cbar_kws={'label': 'Accuracy (%)'})
+            plt.title(f"Benchmarking Clasificación: {m}\nAccuracy % (Sobreajuste % entre paréntesis)", fontsize=14, pad=20)
+            
+            nombre_arch = f"RESULTADOS_CLF_{m.replace(' ', '_').replace('(', '').replace(')', '')}.png"
+            plt.savefig(self.graphics_dir / nombre_arch, dpi=300, bbox_inches='tight')
+            plt.close()
+
+        # REGRESIÓN (MAE) 
+        for m in df_reg['Modelo'].unique():
+            df_m = df_reg[df_reg['Modelo'] == m]
+            tabla_mae = df_m.pivot(index='Dominio', columns='Modalidad', values='MAE_Val (Z)')
+            
+            plt.figure(figsize=(10, 6))
+            sns.heatmap(tabla_mae, annot=True, cmap="RdYlGn_r", fmt=".3f", cbar_kws={'label': 'MAE (Error en Z)'})
+            plt.title(f"Benchmarking Regresión: {m}\n(Error MAE en Puntuación Z)", fontsize=14, pad=20)
+            
+            nombre_arch = f"RESULTADOS_REG_{m.replace(' ', '_')}.png"
+            plt.savefig(self.graphics_dir / nombre_arch, dpi=300, bbox_inches='tight')
+            plt.close()
+        
+        print(f"\n✅ IMÁGENES GUARDADAS en: {self.graphics_dir}")
+
+
 # MODELOS:  https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifier.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
