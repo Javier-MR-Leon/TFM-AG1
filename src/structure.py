@@ -97,10 +97,3 @@ def preparar_entorno_y_explorar(base_path_str, estudio_path_str):
     print(f"Imágenes centralizadas en: {valid_dir}")
     
     return lista_final
-
-if __name__ == "__main__":
-
-    RUTA_ORIGEN = "./data" 
-    RUTA_PROYECTO_TFM = "./data/ESTUDIO_TFM"
-    
-    preparar_entorno_y_explorar(RUTA_ORIGEN, RUTA_PROYECTO_TFM)
