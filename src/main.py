@@ -1,6 +1,6 @@
 """
-PIPELINE PRINCIPAL - TFM NEUROIMAGEN
------------------------------------
+PIPELINE TRATAMIENTO DE LOS DATOS - TFM NEUROIMAGEN
+---------------------------------------------------
 Orquestador principal que conecta los módulos de:
 1. Preprocesamiento de Imagen (DICOM a NIfTI)
 2. Estructuración y Triaje (Filtro de calidad)
