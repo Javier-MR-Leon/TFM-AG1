@@ -201,31 +201,6 @@ def extraer_grosor_cortical_completo(lista_pacientes, estudio_dir):
     pd.DataFrame(resultados).to_csv(os.path.join(estudio_dir, "3_FEATURES", "grosor_cortical.csv"), index=False)
     print(f"\n GROSOR CORTICAL EXTRAIDO")
 
-if __name__ == "__main__":
-    # Rutas: 
-    ESTUDIO_DIR = "./data/ESTUDIO_TFM"
-    FS_LICENSE = "./data/LICENSE_FS/license.txt"
-
-    # Segmentación automática mediante DOCKER (SynthSeg) 
-    ejecutar_synthseg_lote_docker(lista_pacientes, ESTUDIO_DIR)
-    
-    # Ejecuta FastSurfer para superficies y grosor
-    ejecutar_fastsurfer_lote_docker(lista_pacientes, ESTUDIO_DIR, FS_LICENSE)
-
-    # --- 6. EXTRACCIÓN DE BIOMARCADORES ---
-    # Radiómica (Textura y Entropía)
-    print("\n📊 Extrayendo características de Radiómica...")
-    extraer_radiomica_lote(lista_pacientes, ESTUDIO_DIR)
-    
-    # Grosor Cortical (Atlas DKT)
-    print("\n📊 Extrayendo métricas de Grosor Cortical...")
-    extraer_grosor_cortical_completo(lista_pacientes, ESTUDIO_DIR)
-
-    print("\n" + "="*50)
-    print("✅ PIPELINE COMPLETADO CON ÉXITO")
-    print(f"Resultados listos en: {os.path.join(ESTUDIO_DIR, '3_FEATURES')}")
-    print("="*50)
-
 # RECURSOS: https://www.datacamp.com/es/tutorial/tqdm-python
 # https://docs.python.org/es/3/library/subprocess.html
 # https://surfer.nmr.mgh.harvard.edu/fswiki/infantFS-containers
