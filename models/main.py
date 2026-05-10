@@ -37,6 +37,7 @@ def main():
     print("\n Ejecutando Benchmarking masivo (LOOCV)...")
     # Esto genera los archivos benchmarking_clasificacion.csv y benchmarking_regresion.csv
     df_res_clf, df_res_reg = benchmarker.ejecutar_benchmarking(datasets)
+    bm.guardar_reportes_visuales(df_clf, df_reg)
 
     # EVALUACIÓN Y BIOMARCADORES 
     print("\n Auditando modelos y extrayendo biomarcadores...")
