@@ -152,7 +152,7 @@ def auditar_resolucion(directorio_busqueda):
 
 # --- BLOQUE DE EJECUCIÓN ---
 if __name__ == "__main__":
-    # Configura tus rutas aquí
+    # Rutas:
     PATH_RAW_DICOM = "./data/DATA_RAW/0_DICOM_RAW"
     PATH_CONVERTED = "./data/DATA_RAW/1_NIFTI_CONVERTED"
     PATH_FINAL_T1  = "./data/DATA_RAW/2_T1_CLEAN"
