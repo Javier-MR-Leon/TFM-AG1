@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Datos médicos (NUNCA SUBIR)
+*.nii
+*.nii.gz
+*.dcm
+*.xlsx
+*.csv
+/data/
+/0_RAW/
+/1_SEGMENTATION/
+/3_FEATURES/
