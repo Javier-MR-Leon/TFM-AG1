@@ -143,17 +143,3 @@ class ModelEvaluator:
         
         print(f" Reportes finales guardados en {self.graphics_dir}")
         return df_clf_fin, df_reg_fin
-
-if __name__ == "__main__":
-    PROYECTO = "./data/ESTUDIO_TFM"
-    evaluator = ModelEvaluator(PROYECTO)
-    
-    # Cargar resultados del paso anterior
-    try:
-        df_clf = pd.read_csv(evaluator.graphics_dir / "benchmarking_clasificacion.csv")
-        df_reg = pd.read_csv(evaluator.graphics_dir / "benchmarking_regresion.csv")
-        datasets = evaluator.benchmarker.cargar_datasets_finales()
-        
-        evaluator.generar_reporte_final(df_clf, df_reg, datasets)
-    except FileNotFoundError:
-        print(" X Error: Ejecuta primero training.py para generar los datos de benchmarking.")
