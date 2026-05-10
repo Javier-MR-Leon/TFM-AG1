@@ -50,7 +50,7 @@ def convertir_dicom_a_nifti(ruta_origen, ruta_destino, ruta_nifti):
             if not ruta_final.exists():
                 # Lo movemos/copiamos directamente a la carpeta final
                 shutil.copy2(carpeta, ruta_final)
-                print(f"⏩ NIfTI directo detectado y copiado: {nombre_final}")
+                print(f" NIfTI directo detectado y copiado: {nombre_final}")
             continue
       
         if carpeta.is_dir():
@@ -128,7 +128,7 @@ def organizar_t1_final(ruta_entrada_str, ruta_salida_str):
                 shutil.copy2(archivo_elegido, ruta_salida / nuevo_nombre)
                 print(f"{indicador} Copiado: {nuevo_nombre}")
             except Exception as e:
-                print(f"❌ Error: {e}")
+                print(f" X Error: {e}")
 
 def auditar_resolucion(directorio_busqueda):
     """
