@@ -1,0 +1,21 @@
+# Entorno de desarrollo TFM - Python 3.10.19
+
+# Gestión de Imágenes Médicas
+pydicom==3.0.2
+dicom2nifti==2.6.2
+nibabel==5.4.2
+SimpleITK==2.5.3
+pyradiomics==3.0.1
+
+# Procesamiento y Ciencia de Datos
+pandas==2.3.3
+numpy==1.26.4
+scipy==1.15.3
+tqdm==4.67.1
+
+# Machine Learning y Modelado
+scikit-learn==1.7.2
+
+# Visualización Estadística
+matplotlib==3.10.7
+seaborn==0.13.2
