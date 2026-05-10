@@ -98,7 +98,6 @@ def preparar_entorno_y_explorar(base_path_str, estudio_path_str):
     
     return lista_final
 
-# --- BLOQUE DE EJECUCIÓN (MAIN) ---
 if __name__ == "__main__":
 
     RUTA_ORIGEN = "./data" 
