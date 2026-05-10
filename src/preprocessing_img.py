@@ -150,22 +150,6 @@ def auditar_resolucion(directorio_busqueda):
         except Exception as e:
             print(f"Error en {ruta.name}: {e}")
 
-# --- BLOQUE DE EJECUCIÓN ---
-if __name__ == "__main__":
-    # Rutas:
-    PATH_RAW_DICOM = "./data/DATA_RAW/0_DICOM_RAW"
-    PATH_CONVERTED = "./data/DATA_RAW/1_NIFTI_CONVERTED"
-    PATH_FINAL_T1  = "./data/DATA_RAW/2_T1_CLEAN"
-
-    # 1. Convertir DICOM a NIFTI
-    convertir_dicom_a_nifti(PATH_RAW_DICOM, PATH_CONVERTED, PATH_FINAL_T1)
-
-    # 2. Organizar T1 con prioridad 3D
-    organizar_t1_final(PATH_CONVERTED, PATH_FINAL_T1)
-
-    # 3. Auditar resolución técnica
-    auditar_resolucion(PATH_FINAL_T1)
-
 # RECURSOS: https://docs.python.org/es/3/library/pathlib.html
 # https://pydicom.github.io/pydicom/stable/tutorials/dataset_basics.html
 # https://pydicom.github.io/pydicom/dev/auto_examples/input_output/plot_read_dicom.html
