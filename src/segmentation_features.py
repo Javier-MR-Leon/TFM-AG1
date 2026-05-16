@@ -141,9 +141,6 @@ def extraer_radiomica_lote(lista_pacientes, estudio_dir):
     extractor.enableFeatureClassByName('glcm')
 
     resultados = []
-    labels = {'Putamen_L': 12, 'Putamen_R': 51, 'Caudado_L': 11, 'Caudado_R': 50, 'Palido_L': 13, 'Palido_R': 52, 'Talamo_L': 10, 'Talamo_R': 49,
-              'Accumbens_L': 26, 'Accumbens_R': 58, 'Sust_Blanca_L': 2, 'Sust_Blanca_R': 41, 'Tronco_Encefalico': 16, 'Ventriculos_Lat_L': 4, 
-              'Ventriculos_Lat_R': 43, 'LCR_Extracerebral': 24}
 
     for p in lista_pacientes:
         p_id = p['id']
@@ -164,12 +161,27 @@ def extraer_radiomica_lote(lista_pacientes, estudio_dir):
 
         # Extracción por ROI
         datos = {'ID': p_id}
-        for roi, val in labels.items():
+
+        mask_data = sitk.GetArrayFromImage(sitk.ReadImage(str(seg_path)))
+        etiquetas_presentes = np.unique(mask_data)
+        etiquetas_presentes = etiquetas_presentes[etiquetas_presentes > 0] 
+        
+        print(f" -> Procesando {p_id}: {len(etiquetas_presentes)} regiones detectadas.")
+
+        for val in etiquetas_presentes:
             try:
-                f = extractor.execute(t1_adj_path, seg_path, label=val)
-                datos[f'{roi}_Intensity'] = f.get('diagnostics_Image-original_Mean')
-                datos[f'{roi}_Entropy'] = f.get('original_firstorder_Entropy')
-            except: continue
+                # Extraemos las características de cada etiqueta encontrada
+                features = extractor.execute(str(t1_ajustado_path), str(seg_path), label=int(val))
+                
+                # Guardamos los valores usando el número de etiqueta como prefijo
+                # (Luego en el post-procesamiento les pondrás nombre según el atlas de SynthSeg)
+                prefix = f"ROI_{val}"
+                datos[f'{prefix}_Entropy'] = features.get('original_firstorder_Entropy')
+                datos[f'{prefix}_Energy'] = features.get('original_firstorder_Energy')
+                datos[f'{prefix}_Contrast'] = features.get('original_glcm_Contrast')
+                
+            except Exception as e:
+                continue
         resultados.append(datos)
 
     pd.DataFrame(resultados).to_csv(os.path.join(estudio_dir, "3_FEATURES", "radiomica_results.csv"), index=False)
@@ -200,6 +212,58 @@ def extraer_grosor_cortical_completo(lista_pacientes, estudio_dir):
 
     pd.DataFrame(resultados).to_csv(os.path.join(estudio_dir, "3_FEATURES", "grosor_cortical.csv"), index=False)
     print(f"\n GROSOR CORTICAL EXTRAIDO")
+
+def extraer_morfometria_completa(lista_pacientes, estudio_dir_str):
+    """
+    Extrae Grosor Cortical (ThickAvg) y Curvatura/Girificación (MeanCurv)
+    de todas las regiones del Atlas DKT procesadas por FastSurfer.
+    """
+    fs_out_dir = os.path.join(estudio_dir, "1_SEGMENTATION", "1_FASTSURFER_OUT")
+    resultados_morfometria = []
+
+    print("\n INICIANDO EXTRACCIÓN DE MORFOMETRÍA CORTICAL (GROSOR + GIRIFICACIÓN/CURVATURA)")
+
+    for paciente in lista_pacientes:
+        p_id = paciente['id']
+        lh_stats = fs_out_dir / p_id / "stats" / "lh.aparc.DKTatlas.mapped.stats"
+        rh_stats = fs_out_dir / p_id / "stats" / "rh.aparc.DKTatlas.mapped.stats"
+
+        datos_paciente = {'ID': p_id}
+
+        def procesar_stats(ruta_archivo, hemi):
+            if not ruta_archivo.exists():
+                return
+            
+            with open(ruta_archivo, 'r') as f:
+                for linea in f:
+                    if linea.startswith('#') or not linea.strip():
+                        continue
+                    
+                    columnas = linea.split()
+                    if len(columnas) > 7:
+                        region = columnas[0]
+                        grosor = float(columnas[4])    # ThickAvg
+                        curvatura = float(columnas[7]) # MeanCurv 
+
+                        datos_paciente[f'{hemi}_{region}_thickness'] = grosor
+                        datos_paciente[f'{hemi}_{region}_gyrification'] = curvatura
+
+        procesar_stats(lh_stats, 'lh')
+        procesar_stats(rh_stats, 'rh')
+
+        if len(datos_paciente) > 1:
+            resultados_morfometria.append(datos_paciente)
+        else:
+            print(f"   • {p_id}: X Sin datos stats.")
+            
+        return pd.DataFrame()
+
+    df_morfometria = pd.DataFrame(resultados_morfometria)
+    ruta_csv = estudio_dir / "3_FEATURES" / "morfometria_completa.csv"
+    df_morfometria.to_csv(ruta_csv, index=False)
+    
+    print(f" Morfometría completada. Guardada matriz de dimensiones: {df_morfometria.shape}")
+    return df_morfometria
 
 # RECURSOS: https://www.datacamp.com/es/tutorial/tqdm-python
 # https://docs.python.org/es/3/library/subprocess.html
