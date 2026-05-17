@@ -60,8 +60,8 @@ def main():
     # Extracción de Radiómica (Ganglios Basales)
     extraer_radiomica_lote(lista_pacientes, str(RUTA_ESTUDIO))
     
-    # Extracción de Grosor Cortical (Atlas DKT)
-    extraer_grosor_cortical_completo(lista_pacientes, str(RUTA_ESTUDIO))
+    # Extracción de Morfometría Cortical (Grosor + Girificación/Curvatura)
+    extraer_morfometria_completa(lista_pacientes, str(RUTA_ESTUDIO))
 
     # --- 4. MÓDULO: FEATURE ENGINEERING ---
     # Normalización, Vinculación clínica, EDA y Poda de Colinealidad
@@ -70,7 +70,7 @@ def main():
     # Definición de rutas para el procesador de features
     rutas_features = {
         "vol": RUTA_ESTUDIO / "3_FEATURES/volumenes_synthseg_todos.csv",
-        "grosor": RUTA_ESTUDIO / "3_FEATURES/grosor_cortical_completo.csv",
+        "morfometria": RUTA_ESTUDIO / "3_FEATURES/morfometria_completa.csv",
         "radio": RUTA_ESTUDIO / "3_FEATURES/radiomica_results.csv"
     }
 
