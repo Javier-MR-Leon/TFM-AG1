@@ -82,7 +82,7 @@ class FeatureProcessor:
     """
     SANITY CHECK UNIFICADO:
     1. Escanea asimetrías extremas (Volumetría).
-    2. Valida rangos biológicos (Grosor).
+    2. Valida rangos biológicos (morfometria).
     3. Detecta redundancias (Radiómica).
     4. Auditoría Multinivel de Outliers (Z-Score).
     """
@@ -112,18 +112,29 @@ class FeatureProcessor:
             if outliers:
                 print(f" ---> Asimetría extrema en {c_izq.replace('left ','')}: {outliers}")
 
-    # GROSOR: RANGO BIOLÓGICO
-    df_grosor = data['grosor']
-    print("\n Analizando Grosor Cortical...")
-    cols_thick = [c for c in df_grosor.columns if 'thick' in c]
+    # MORFOMETRÍA: RANGO BIOLÓGICO
+    df_morfometria = data['morfometria']
+    print("\n Analizando Morfometria Cortical...")
+    cols_thick = [c for c in df_morfometria.columns if 'thick' in c]
     for c in cols_thick:
-        fuera = df_grosor[(df_grosor[c] > 5.0) | (df_grosor[c] < 1.0)]['id'].tolist()
+        fuera = df_morfometria[(df_morfometria[c] > 5.0) | (df_morfometria[c] < 1.0)]['id'].tolist()
         if fuera:
             print(f" X {c} fuera de rango (1-5mm): {fuera}")
             hay_errores_biologicos = True
     
     if not hay_errores_biologicos:
-        print(" Todos los grosores dentro del rango biológico (1-5 mm).")
+        print(" Todos los morfometria dentro del rango biológico (1-5 mm).")
+
+    # B) Check de Girificación 
+    columnas_gyri = [c for c in df_morfometria.columns if 'gyrification' in c]
+
+    for col in columnas_gyri:
+        fuera_rango = df_morfometria[(df_morfometria[col] > 2.0) | (df_morfometria[col] < -2.0) | (df_morfometria[col] == 0.0)].tolist()
+        if fuera_rango:
+            print(f" X {col} fuera de rango (1-5mm): {fuera_rango}")
+            errores_biologicos_gyri = True
+    if not hay_errores_biologicos:
+    print(" Todos los índices de girificación dentro del rango topológico esperado (-2.0 a 2.0).")
       
     # RADIÓMICA: REDUNDANCIA 
     df_rad = data['radio']
@@ -171,7 +182,7 @@ class FeatureProcessor:
         """
         Función Maestra de Normalización:
         1. Volúmenes: Normalización biológica por ICV.
-        2. Grosor/Radiómica: Normalización estadística Z-Score.
+        2. Morfometria/Radiómica: Normalización estadística Z-Score.
         3. Clínico: Imputación de Perímetro y Z-Score de variables continuas.
         """
         datasets_procesados = {}
@@ -210,7 +221,26 @@ class FeatureProcessor:
                 df[cols_cont] = scaler.fit_transform(df[cols_cont])
                 datasets_procesados[modalidad] = df
 
-            # GROSOR Y RADIÓMICA (Z-Score completo)
+            elif modalidad == "morfometria":
+                print(f" [{modalidad.upper()}] Aplicando Z-Score separado (Thickness vs Gyrification)...")
+                
+                # Filtrar subfamilias numéricas
+                cols_thick = [c for c in df.columns if 'thick' in c.lower() and df[c].dtype in ['float64', 'int64']]
+                cols_gyri = [c for c in df.columns if 'gyrification' in c.lower() and df[c].dtype in ['float64', 'int64']]
+                
+                if cols_thick:
+                    scaler_thick = StandardScaler()
+                    df[cols_thick] = scaler_thick.fit_transform(df[cols_thick])
+                    print(f"     🔹 {len(cols_thick)} variables de Thickness normalizadas de forma aislada.")
+                    
+                if cols_gyri:
+                    scaler_gyri = StandardScaler()
+                    df[cols_gyri] = scaler_gyri.fit_transform(df[cols_gyri])
+                    print(f"     🔹 {len(cols_gyri)} variables de Gyrification normalizadas de forma aislada.")
+                    
+                datasets_procesados[modalidad] = df
+
+            # RADIÓMICA (Z-Score completo)
             else:
                 print(f"⚖️ [{modalidad.upper()}] Aplicando Z-Score estadístico...")
                 excluir = ['id']
@@ -354,7 +384,7 @@ class FeatureProcessor:
         """
         Aplica la poda de colinealidad con umbrales específicos:
         - Radiómica: 0.98 (Para mantener la sensibilidad de textura).
-        - Resto (Volumen, Grosor, Clínico): 0.85 (Estándar para evitar redundancia).
+        - Resto (Volumen, Morfometria, Clínico): 0.85 (Estándar para evitar redundancia).
         """
         print("\n INICIANDO PODA DE VARIABLES COLINEALES (DINÁMICA)")
         datasets_podados = {}
