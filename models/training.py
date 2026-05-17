@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from pathlib import Path
+import pingouin as pg
 
 # Scikit-learn Base
 from sklearn.model_selection import LeaveOneOut, GridSearchCV
@@ -31,6 +32,7 @@ class ModelBenchmarker:
         self.proyecto_dir = Path(proyecto_dir)
         self.features_dir = self.proyecto_dir / "3_FEATURES"
         self.graphics_dir = self.proyecto_dir / "4_GRAPHICS"
+        self.clean_dir = self.features_dir / "DATA_CLEAN"
 
     def cargar_datasets_maestros(self):
         """Busca y carga los archivos dataset_ML_*_FINAL.csv"""
@@ -192,8 +194,116 @@ class ModelBenchmarker:
             plt.savefig(self.graphics_dir / nombre_arch, dpi=300, bbox_inches='tight')
             plt.close()
         
-        print(f"\n✅ IMÁGENES GUARDADAS en: {self.graphics_dir}")
+        print(f"\n IMÁGENES GUARDADAS en: {self.graphics_dir}")
 
+def screening_mediacion_crisis_total_tfm(self, dict_datasets, x_var='crisis_encefalop_ticas_v2'):
+        """X: Variable clínica de Crisis | M: Mediadores de Imagen | Y: Dominios Cognitivos"""
+        print(f"\n INICIANDO MEGA-SCREENING MULTITAREA (X = {x_var})")
+
+        df_clin = dict_datasets["Clínico"].copy()
+        df_clin['record_id'] = df_clin['record_id'].astype(str).str.strip()
+        targets_y = [c for c in df_clin.columns if c.startswith('D_')]
+
+        resultados_globales = []
+        datasets_analizar = ["Volumen", "Morfometria", "Radiómica"]
+        
+        for tipo_ds in datasets_analizar:
+            
+            print(f"Procesando Dominio Imagen: {tipo_ds}...")
+            df_brain = dict_datasets[tipo_ds].copy()
+            df_brain['record_id'] = df_brain['record_id'].astype(str).str.strip()
+            
+            cols_drop = [c for c in df_brain.columns if c.startswith('D_') or c in ['sexo', 'Edad_RM']]
+            df_brain_clean = df_brain.drop(columns=[c for c in cols_drop if c != 'record_id'])
+            df_master = pd.merge(df_brain_clean, df_clin, on='record_id')
+            
+            mediadores = [c for c in df_brain_clean.columns if c not in ['record_id', 'sexo', 'Edad_RM', x_var, 'crisis_encefalop_ticas_v2', 'bioquimico']]
+
+            for target in targets_y:
+                for m_roi in mediadores:
+                    try:
+                        df_model = df_master[['crisis_encefalop_ticas_v2', m_roi, target, 'sexo', 'Edad_RM']].dropna()
+                        if len(df_model) < 15: continue
+                        
+                        # Corrección: Uso del método de residuos interno de la clase
+                        df_res = self.ajustar_por_residuos(df_model, [m_roi])
+                        res = pg.mediation_analysis(data=df_res, x='crisis_encefalop_ticas_v2', m=m_roi, y=target, n_boot=200, seed=42)
+                        
+                        col_c = [c for c in res.columns if 'coef' in c.lower()][0]
+                        col_p = [c for c in res.columns if 'pval' in c.lower() or 'p-val' in c.lower()][0]
+                        
+                        row_a = res[res['path'].str.contains('~ X', na=False)]
+                        row_b = res[res['path'].str.contains('Y ~', na=False)]
+                        row_ind = res[res['path'].str.contains('Indirect', na=False)]
+                        
+                        resultados_globales.append({
+                            'Target_Y': target, 'Modalidad_M': tipo_ds, 'Mediador_M': m_roi,
+                            'Coef_Indirecto': row_ind[col_c].values[0], 'P_val_Indirecto': row_ind[col_p].values[0],
+                            'Sig': row_ind['sig'].values[0],
+                            'P_Path_A (Crisis->Medida)': row_a[col_p].values[0],
+                            'P_Path_B (Medida->Dominio)': row_b[col_p].values[0]
+                        })
+                    except: continue
+
+        df_final = pd.DataFrame(resultados_globales)
+        df_final = df_final.sort_values(by=['P_val_Indirecto'])
+        print(f" \nScreening Crisis completado.\n")
+        return df_final
+
+    def screening_mediacion_bioq_total_tfm(self, dict_datasets, x_var='bioquimico'):
+        """X: Variable clínica Bioquímica | M: Mediadores de Imagen | Y: Dominios Cognitivos"""
+        print(f"\nINICIANDO MEGA-SCREENING MULTITAREA (X = {x_var})")
+
+        df_clin = dict_datasets["Clínico"].copy()
+        df_clin['record_id'] = df_clin['record_id'].astype(str).str.strip()
+        targets_y = [c for c in df_clin.columns if c.startswith('D_')]
+
+        resultados_globales = []
+        datasets_analizar = ["Volumen", "Morfometria", "Radiómica"]
+        
+        for tipo_ds in datasets_analizar:
+            if tipo_ds not in dict_datasets: continue
+            
+            print(f"Procesando Dominio Imagen: {tipo_ds}...")
+            df_brain = dict_datasets[tipo_ds].copy()
+            df_brain['record_id'] = df_brain['record_id'].astype(str).str.strip()
+            
+            cols_drop = [c for c in df_brain.columns if c.startswith('D_') or c in ['sexo', 'Edad_RM']]
+            df_brain_clean = df_brain.drop(columns=[c for c in cols_drop if c != 'record_id'])
+            df_master = pd.merge(df_brain_clean, df_clin, on='record_id')
+            
+            mediadores = [c for c in df_brain_clean.columns if c not in ['record_id', 'sexo', 'Edad_RM', x_var, 'bioquimico', 'crisis_encefalop_ticas_v2']]
+
+            for target in targets_y:
+                for m_roi in mediadores:
+                    try:
+                        df_model = df_master[['bioquimico', m_roi, target, 'sexo', 'Edad_RM']].dropna()
+                        if len(df_model) < 15: continue
+                        
+                        # Corrección: Uso del método de residuos interno de la clase
+                        df_res = self.ajustar_por_residuos(df_model, [m_roi])
+                        res = pg.mediation_analysis(data=df_res, x='bioquimico', m=m_roi, y=target, n_boot=200, seed=42)
+                        
+                        col_c = [c for c in res.columns if 'coef' in c.lower()][0]
+                        col_p = [c for c in res.columns if 'pval' in c.lower() or 'p-val' in c.lower()][0]
+                        
+                        row_a = res[res['path'].str.contains('~ X', na=False)]
+                        row_b = res[res['path'].str.contains('Y ~', na=False)]
+                        row_ind = res[res['path'].str.contains('Indirect', na=False)]
+                        
+                        resultados_globales.append({
+                            'Target_Y': target, 'Modalidad_M': tipo_ds, 'Mediador_M': m_roi,
+                            'Coef_Indirecto': row_ind[col_c].values[0], 'P_val_Indirecto': row_ind[col_p].values[0],
+                            'Sig': row_ind['sig'].values[0],
+                            'P_Path_A (Bioquímico->Medida)': row_a[col_p].values[0],
+                            'P_Path_B (Medida->Dominio)': row_b[col_p].values[0]
+                        })
+                    except: continue
+
+        df_final = pd.DataFrame(resultados_globales)
+        df_final = df_final.sort_values(by=['P_val_Indirecto'])
+        print(f"\nScreening Bioquímico completado.\n")
+        return df_final
 
 # MODELOS:  https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeClassifier.html
@@ -205,5 +315,6 @@ class ModelBenchmarker:
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html
+# https://pingouin-stats.org/generated/pingouin.mediation_analysis.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html
 # https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
