@@ -30,6 +30,7 @@ class ModelBenchmarker:
     def __init__(self, proyecto_dir):
         self.proyecto_dir = Path(proyecto_dir)
         self.features_dir = self.proyecto_dir / "3_FEATURES"
+        self.graphics_dir = self.proyecto_dir / "4_GRAPHICS"
 
     def cargar_datasets_maestros(self):
         """Busca y carga los archivos dataset_ML_*_FINAL.csv"""
