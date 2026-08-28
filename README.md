@@ -6,7 +6,7 @@
 
 Este repositorio contiene el pipeline completo de procesamiento y análisis de datos desarrollado para el **Trabajo de Fin de Máster (TFM) en Ciencia de Datos**. El proyecto integra técnicas de Deep Learning para el procesamiento de imágenes de Resonancia Magnética (RM), preprocesamiento de datos y Machine Learning para la predicción de dimensiones neurocognitivas en pacientes con Aciduria Glutárica tipo 1 (AG1) mediante modelos de clasificación y regresión.
 
----
+----
 
 ## Descripción del Proyecto
 
