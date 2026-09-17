@@ -1,4 +1,4 @@
-MÓDULO DE PROCESAMIENTO DE FEATURES Y NORMALIZACIÓN
+""" MÓDULO DE PROCESAMIENTO DE FEATURES Y NORMALIZACIÓN
 ---------------------------------------------------
 Este script realiza:
 1. Creación de dominios neurocognitivos (D_).
