@@ -20,7 +20,7 @@ def ejecutar_synthseg_lote_docker(lista_pacientes, estudio_dir_str):
     Orquesta SynthSeg (FreeSurfer) mediante Docker para segmentación subcortical.
     Genera volúmenes y máscaras, unificando los resultados en un CSV maestro.
     """
-    estudio_dir = Path(estudio_dir_str)
+    estudio_dir = Path(estudio_dir_str).resolve()
     print("\n INICIANDO PIPELINE DE SEGMENTACIÓN (SYNTHSEG)")
     tiempo_inicio_total = time.time()
     rutas_csv_individuales = []
@@ -89,7 +89,7 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
     Optimizado para Windows mediante el uso de CPU en la agregación de vistas
     para evitar desbordamientos de memoria.
     """
-    estudio_dir = Path(estudio_dir_str)
+    estudio_dir = Path(estudio_dir_str).resolve()
     tiempo_inicio_total = time.time()
     print("\n INICIANDO PIPELINE MORFOMETRÍA DE SUPERFICIE (FASTSURFER)")
     pacientes_fallidos = []
