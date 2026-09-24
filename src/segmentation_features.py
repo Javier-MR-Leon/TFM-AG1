@@ -93,18 +93,18 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
     tiempo_inicio_total = time.time()
     print("\n INICIANDO PIPELINE MORFOMETRÍA DE SUPERFICIE (FASTSURFER)")
     
-    
+    out_dir = estudio_dir / "1_SEGMENTATION" / "1_FASTSURFER_OUT"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     for paciente in tqdm(lista_pacientes, desc="Procesando Superficie"):
         id_p = paciente['id']
         t1_file = paciente['ruta_absolute'].name
-        out_dir = estudio_dir / "1_SEGMENTATION" / "1_FASTSURFER_OUT"
-        out_dir.mkdir(parents=True, exist_ok=True)
 
-        try:
-            check_file = sd_dir / id_paciente / "surf" / "lh.thickness"
-            if check_file.exists():
-                tqdm.write(f"---> {id_paciente} ya tiene resultados. Saltando...")
-                continue
+        # Comprobación de si ya existe la segmentación para saltarla
+        check_file = out_dir / id_p / "surf" / "lh.thickness"
+        if check_file.exists():
+            tqdm.write(f"---> {id_p} ya tiene resultados. Saltando...")
+            continue
 
         comando = [
             "docker", "run", "--rm", "--gpus", "all", "--user", "root",
@@ -122,11 +122,11 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
         except subprocess.CalledProcessError as e:
             tqdm.write(f" X Error FastSurfer en {id_p}: {e.stderr}")
 
-      tiempo_fin_total = time.time()
-      horas_totales = (tiempo_fin_total - tiempo_inicio_total) / 3600
-      print(f"\n MORFOMETRÍA DE SUPERFICIE FINALIZADA. Tiempo total de procesamiento: {horas_totales:.2f} horas.")
+    tiempo_fin_total = time.time()
+    horas_totales = (tiempo_fin_total - tiempo_inicio_total) / 3600
+    print(f"\n MORFOMETRÍA DE SUPERFICIE FINALIZADA. Tiempo total de procesamiento: {horas_totales:.2f} horas.")
       
-      if pacientes_fallidos:
+    if pacientes_fallidos:
         print(f"\n X El proceso terminó con errores en estos pacientes: {pacientes_fallidos}")
         print("Revisa las imágenes originales de estos sujetos; pueden tener mucho ruido o artefactos.")
 
