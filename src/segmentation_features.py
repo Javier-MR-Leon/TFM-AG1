@@ -21,6 +21,7 @@ def ejecutar_synthseg_lote_docker(lista_pacientes, estudio_dir_str):
     Genera volúmenes y máscaras, unificando los resultados en un CSV maestro.
     """
     estudio_dir = Path(estudio_dir_str).resolve()
+    estudio_dir_abs = str(estudio_dir).replace("\\", "/")
     print("\n INICIANDO PIPELINE DE SEGMENTACIÓN (SYNTHSEG)")
     tiempo_inicio_total = time.time()
     rutas_csv_individuales = []
@@ -47,7 +48,7 @@ def ejecutar_synthseg_lote_docker(lista_pacientes, estudio_dir_str):
             
         comando = [
             "docker", "run", "--rm", 
-            "-v", f"{estudio_dir_str}:/data", 
+            "-v", f"{estudio_dir_abs}:/data", 
             "freesurfer/freesurfer:7.4.1", 
             "mri_synthseg", "--i", ruta_input_docker, 
             "--o", ruta_output_docker, "--vol", ruta_vol_docker
@@ -90,6 +91,9 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
     para evitar desbordamientos de memoria.
     """
     estudio_dir = Path(estudio_dir_str).resolve()
+    estudio_dir_abs = str(estudio_dir).replace("\\", "/") # <-- AÑADIR ESTA
+    fs_license_abs = str(Path(fs_license_path).resolve()).replace("\\", "/")
+    
     tiempo_inicio_total = time.time()
     print("\n INICIANDO PIPELINE MORFOMETRÍA DE SUPERFICIE (FASTSURFER)")
     pacientes_fallidos = []
@@ -109,8 +113,8 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
 
         comando = [
             "docker", "run", "--rm", "--gpus", "all", "--user", "root",
-            "-v", f"{estudio_dir_str}:/data",
-            "-v", f"{fs_license_path}:/opt/freesurfer/license.txt",
+            "-v", f"{estudio_dir_abs}:/data",
+            "-v", f"{fs_license_abs}:/opt/freesurfer/license.txt",
             "--env", "FS_LICENSE=/opt/freesurfer/license.txt", 
             "deepmi/fastsurfer:latest", "--allow_root",
             "--t1", f"/data/0_VALID_IMAGES/{t1_file}",
