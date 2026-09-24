@@ -29,7 +29,7 @@ def ejecutar_synthseg_lote_docker(lista_pacientes, estudio_dir_str):
     
     for paciente in barra_progreso:
         id_paciente = paciente['id']
-        nombre_archivo = paciente['ruta_absolute'].name
+        nombre_archivo = paciente['ruta_absoluta'].name
         barra_progreso.set_description(f"Procesando: {id_paciente}")
         
         carpeta_salida = estudio_dir / "1_SEGMENTATION" / id_paciente
@@ -98,7 +98,7 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
 
     for paciente in tqdm(lista_pacientes, desc="Procesando Superficie"):
         id_p = paciente['id']
-        t1_file = paciente['ruta_absolute'].name
+        t1_file = paciente['ruta_absoluta'].name
 
         # Comprobación de si ya existe la segmentación para saltarla
         check_file = out_dir / id_p / "surf" / "lh.thickness"
@@ -144,7 +144,7 @@ def extraer_radiomica_lote(lista_pacientes, estudio_dir):
 
     for p in lista_pacientes:
         p_id = p['id']
-        t1_path = str(p['ruta_absolute'])
+        t1_path = str(p['ruta_absoluta'])
         seg_path = os.path.join(estudio_dir, "1_SEGMENTATION", p_id, f"{p_id}_synthseg.nii.gz")
         t1_adj_path = os.path.join(estudio_dir, "1_SEGMENTATION", p_id, f"{p_id}_t1_ajustado.nii.gz")
 
