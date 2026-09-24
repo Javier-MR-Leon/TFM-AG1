@@ -92,6 +92,7 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
     estudio_dir = Path(estudio_dir_str)
     tiempo_inicio_total = time.time()
     print("\n INICIANDO PIPELINE MORFOMETRÍA DE SUPERFICIE (FASTSURFER)")
+    pacientes_fallidos = []
     
     out_dir = estudio_dir / "1_SEGMENTATION" / "1_FASTSURFER_OUT"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -121,6 +122,7 @@ def ejecutar_fastsurfer_lote_docker(lista_pacientes, estudio_dir_str, fs_license
             subprocess.run(comando, check=True, capture_output=True, text=True, encoding='utf-8', errors='replace')
         except subprocess.CalledProcessError as e:
             tqdm.write(f" X Error FastSurfer en {id_p}: {e.stderr}")
+            pacientes_fallidos.append(id_paciente)
 
     tiempo_fin_total = time.time()
     horas_totales = (tiempo_fin_total - tiempo_inicio_total) / 3600
