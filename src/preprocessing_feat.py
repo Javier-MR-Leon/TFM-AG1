@@ -79,104 +79,104 @@ class FeatureProcessor:
         return df
 
     def ejecutar_sanity_check_maestro(rutas, qc_dir, umbral_z=2.0):
-    """
-    SANITY CHECK UNIFICADO:
-    1. Escanea asimetrías extremas (Volumetría).
-    2. Valida rangos biológicos (morfometria).
-    3. Detecta redundancias (Radiómica).
-    4. Auditoría Multinivel de Outliers (Z-Score).
-    """
-    print("INICIANDO SANITY CHECK NEUROANATÓMICO MAESTRO \n")
-    os.makedirs(qc_dir, exist_ok=True)
+        """
+        SANITY CHECK UNIFICADO:
+        1. Escanea asimetrías extremas (Volumetría).
+        2. Valida rangos biológicos (morfometria).
+        3. Detecta redundancias (Radiómica).
+        4. Auditoría Multinivel de Outliers (Z-Score).
+        """
+        print("INICIANDO SANITY CHECK NEUROANATÓMICO MAESTRO \n")
+        os.makedirs(qc_dir, exist_ok=True)
     
-    # CARGA DE DATOS
-    data = {k: pd.read_csv(v) for k, v in rutas.items()}
+        # CARGA DE DATOS
+        data = {k: pd.read_csv(v) for k, v in rutas.items()}
 
-    # VOLUMETRÍA: ASIMETRÍA Y RELACIÓN SB/ICV
-    df_vol = data['vol']
-    print(" Analizando Volumetría...")
+        # VOLUMETRÍA: ASIMETRÍA Y RELACIÓN SB/ICV
+        df_vol = data['vol']
+        print(" Analizando Volumetría...")
     
-    # Check SB vs ICV
-    col_sb, col_icv = 'left cerebral white matter', 'total intracranial'
-    if col_sb in df_vol.columns and col_icv in df_vol.columns:
-        corr = df_vol[col_sb].corr(df_vol[col_icv])
-        print(f"   • Correlación SB vs ICV: {corr:.2f} (Esperado > 0.80)")
+        # Check SB vs ICV
+        col_sb, col_icv = 'left cerebral white matter', 'total intracranial'
+        if col_sb in df_vol.columns and col_icv in df_vol.columns:
+            corr = df_vol[col_sb].corr(df_vol[col_icv])
+            print(f"   • Correlación SB vs ICV: {corr:.2f} (Esperado > 0.80)")
 
-    # Escaneo de Asimetrías (>15%)
-    columnas_izq = [c for c in df_vol.columns if 'left' in c.lower()]
-    for c_izq in columnas_izq:
-        c_der = c_izq.lower().replace('left', 'right')
-        if c_der in df_vol.columns:
-            asim = (df_vol[c_izq] - df_vol[c_der]) / (df_vol[c_izq] + df_vol[c_der])
-            outliers = df_vol[asim.abs() > 0.15]['id'].tolist()
-            if outliers:
-                print(f" ---> Asimetría extrema en {c_izq.replace('left ','')}: {outliers}")
-
-    # MORFOMETRÍA: RANGO BIOLÓGICO
-    df_morfometria = data['morfometria']
-    print("\n Analizando Morfometria Cortical...")
-    cols_thick = [c for c in df_morfometria.columns if 'thick' in c]
-    for c in cols_thick:
-        fuera = df_morfometria[(df_morfometria[c] > 5.0) | (df_morfometria[c] < 1.0)]['id'].tolist()
-        if fuera:
-            print(f" X {c} fuera de rango (1-5mm): {fuera}")
-            hay_errores_biologicos = True
+        # Escaneo de Asimetrías (>15%)
+        columnas_izq = [c for c in df_vol.columns if 'left' in c.lower()]
+        for c_izq in columnas_izq:
+            c_der = c_izq.lower().replace('left', 'right')
+            if c_der in df_vol.columns:
+                asim = (df_vol[c_izq] - df_vol[c_der]) / (df_vol[c_izq] + df_vol[c_der])
+                outliers = df_vol[asim.abs() > 0.15]['id'].tolist()
+                if outliers:
+                    print(f" ---> Asimetría extrema en {c_izq.replace('left ','')}: {outliers}")
     
-    if not hay_errores_biologicos:
-        print(" Todos los morfometria dentro del rango biológico (1-5 mm).")
-
-    # B) Check de Girificación 
-    columnas_gyri = [c for c in df_morfometria.columns if 'gyrification' in c]
-
-    for col in columnas_gyri:
-        fuera_rango = df_morfometria[(df_morfometria[col] > 2.0) | (df_morfometria[col] < -2.0) | (df_morfometria[col] == 0.0)].tolist()
-        if fuera_rango:
-            print(f" X {col} fuera de rango (1-5mm): {fuera_rango}")
-            errores_biologicos_gyri = True
-    if not hay_errores_biologicos:
-    print(" Todos los índices de girificación dentro del rango topológico esperado (-2.0 a 2.0).")
-      
-    # RADIÓMICA: REDUNDANCIA 
-    df_rad = data['radio']
-    print("\n Analizando Radiómica...")
-    corr_rad = df_rad.select_dtypes(include=[np.number]).corr().abs()
-    upper = corr_rad.where(np.triu(np.ones(corr_rad.shape), k=1).astype(bool))
-    clones = [c for c in upper.columns if any(upper[c] > 0.98)]
-    print(f"   • Variables redundantes (>0.98): {len(clones)}")
-
-    # AUDITORÍA MULTINIVEL (Z-SCORE)
-    print("\n Ejecutando Auditoría de Outliers...")
-    hallazgos_totales = []
-    
-    for mod, df in data.items():
-        excluir = ['id']
-        cols_num = [c for c in df.columns if c not in excluir and df[c].dtype in ['float64', 'int64']]
+        # MORFOMETRÍA: RANGO BIOLÓGICO
+        df_morfometria = data['morfometria']
+        print("\n Analizando Morfometria Cortical...")
+        cols_thick = [c for c in df_morfometria.columns if 'thick' in c]
+        for c in cols_thick:
+            fuera = df_morfometria[(df_morfometria[c] > 5.0) | (df_morfometria[c] < 1.0)]['id'].tolist()
+            if fuera:
+                print(f" X {c} fuera de rango (1-5mm): {fuera}")
+                hay_errores_biologicos = True
         
-        for c in cols_num:
-            m, s = df[c].mean(), df[c].std()
-            if s == 0: continue
-            z = (df[c] - m) / s
+        if not hay_errores_biologicos:
+            print(" Todos los morfometria dentro del rango biológico (1-5 mm).")
+    
+        # B) Check de Girificación 
+        columnas_gyri = [c for c in df_morfometria.columns if 'gyrification' in c]
+    
+        for col in columnas_gyri:
+            fuera_rango = df_morfometria[(df_morfometria[col] > 2.0) | (df_morfometria[col] < -2.0) | (df_morfometria[col] == 0.0)].tolist()
+            if fuera_rango:
+                print(f" X {col} fuera de rango (1-5mm): {fuera_rango}")
+                errores_biologicos_gyri = True
+        if not hay_errores_biologicos:
+            print(" Todos los índices de girificación dentro del rango topológico esperado (-2.0 a 2.0).")
+          
+        # RADIÓMICA: REDUNDANCIA 
+        df_rad = data['radio']
+        print("\n Analizando Radiómica...")
+        corr_rad = df_rad.select_dtypes(include=[np.number]).corr().abs()
+        upper = corr_rad.where(np.triu(np.ones(corr_rad.shape), k=1).astype(bool))
+        clones = [c for c in upper.columns if any(upper[c] > 0.98)]
+        print(f"   • Variables redundantes (>0.98): {len(clones)}")
+    
+        # AUDITORÍA MULTINIVEL (Z-SCORE)
+        print("\n Ejecutando Auditoría de Outliers...")
+        hallazgos_totales = []
+        
+        for mod, df in data.items():
+            excluir = ['id']
+            cols_num = [c for c in df.columns if c not in excluir and df[c].dtype in ['float64', 'int64']]
             
-            outliers = df[z.abs() >= umbral_z]
-            for idx, fila in outliers.iterrows():
-                z_val = abs(z[idx])
-                hallazgos_totales.append({
-                    'Modalidad': mod,
-                    'Paciente': fila['id'],
-                    'Región': c,
-                    'Valor': round(fila[c], 2),
-                    'Z-Score': round(z[idx], 2),
-                    'Severidad': " CRÍTICO" if z_val >= 3 else " NOTABLE"
-                })
-
-    # Guardar informe
-    df_informe = pd.DataFrame(hallazgos_totales)
-    if not df_informe.empty:
-        df_informe.sort_values(by='Z-Score', key=abs, ascending=False, inplace=True)
-        df_informe.to_csv(os.path.join(qc_dir, "informe_sanity_check_outliers.csv"), index=False)
-        print(f"✅ Informe de {len(df_informe)} desviaciones guardado en 2_QC.")
-      
-    return data
+            for c in cols_num:
+                m, s = df[c].mean(), df[c].std()
+                if s == 0: continue
+                z = (df[c] - m) / s
+                
+                outliers = df[z.abs() >= umbral_z]
+                for idx, fila in outliers.iterrows():
+                    z_val = abs(z[idx])
+                    hallazgos_totales.append({
+                        'Modalidad': mod,
+                        'Paciente': fila['id'],
+                        'Región': c,
+                        'Valor': round(fila[c], 2),
+                        'Z-Score': round(z[idx], 2),
+                        'Severidad': " CRÍTICO" if z_val >= 3 else " NOTABLE"
+                    })
+    
+        # Guardar informe
+        df_informe = pd.DataFrame(hallazgos_totales)
+        if not df_informe.empty:
+            df_informe.sort_values(by='Z-Score', key=abs, ascending=False, inplace=True)
+            df_informe.to_csv(os.path.join(qc_dir, "informe_sanity_check_outliers.csv"), index=False)
+            print(f"✅ Informe de {len(df_informe)} desviaciones guardado en 2_QC.")
+          
+        return data
 
     def ejecutar_normalizacion_y_limpieza(self, rutas_dict):
         """
