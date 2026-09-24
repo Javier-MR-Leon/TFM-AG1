@@ -18,7 +18,7 @@ from segmentation_features import (
     ejecutar_synthseg_lote_docker, 
     ejecutar_fastsurfer_lote_docker, 
     extraer_radiomica_lote, 
-    extraer_grosor_cortical_completo
+    extraer_morfometria_completa
 )
 from preprocessing_feat import FeatureProcessor
 
