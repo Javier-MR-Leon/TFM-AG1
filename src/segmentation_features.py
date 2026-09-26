@@ -9,6 +9,7 @@ Grosor Cortical.
 import os
 import time
 import subprocess
+import numpy as np
 import pandas as pd
 import SimpleITK as sitk
 from pathlib import Path
